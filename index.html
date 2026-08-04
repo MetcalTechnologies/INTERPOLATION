@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interpolation — Metcal Technologies</title>
+<meta name="theme-color" content="#144A81">
+<style>
+  :root{
+    --navy:#0f2942; --blue:#1a5f9e; --accent:#2f8fd0; --brand:#144A81;
+    --bg:#f4f7fa; --card:#fff; --border:#d9e2ec;
+    --text:#1c2b39; --muted:#5b7083; --orange:#e8792a;
+    --warn:#b45309; --warnbg:#fffbeb; --ok:#166534; --okbg:#f0fdf4;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--text);padding:24px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  .brand{font-size:22px;font-weight:800;color:var(--brand);letter-spacing:-.01em;margin-bottom:14px;}
+  .brand a{color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;margin-left:12px;letter-spacing:0;}
+  .brand a:hover{text-decoration:underline;}
+  header h1{font-size:21px;margin:0 0 4px;color:var(--navy);}
+  header p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55;}
+  .tabs{display:flex;gap:6px;margin:18px 0 0;flex-wrap:wrap;}
+  .tab{background:#fff;border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;
+       padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  .tab[aria-selected="true"]{color:var(--navy);background:var(--card);box-shadow:0 -2px 0 var(--blue) inset;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+        padding:20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(15,41,66,.04);}
+  .tabs + .card{border-top-left-radius:0;}
+  .card h2{font-size:14px;margin:0 0 14px;color:var(--navy);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .field{flex:1;min-width:130px;}
+  label{display:block;font-size:11px;font-weight:700;color:var(--muted);
+        margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);
+               border-radius:8px;font-size:15px;background:#fff;color:var(--text);}
+  textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;min-height:150px;line-height:1.5;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .out{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .kpi{flex:1;min-width:150px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--navy);margin-top:4px;font-variant-numeric:tabular-nums;}
+  .kpi .s{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .work{margin-top:14px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;
+        padding:14px 16px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        font-size:13px;line-height:1.7;color:var(--navy);overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:380px;}
+  .tablewrap{overflow-x:auto;}
+  th,td{padding:8px 10px;text-align:left;font-size:13.5px;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+  td.n{font-variant-numeric:tabular-nums;}
+  tr.hit td{background:#eaf3fb;font-weight:700;color:var(--navy);}
+  .warnbox{background:var(--warnbg);border:1px solid #fde68a;color:var(--warn);
+           padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.55;margin-top:14px;}
+  .okbox{background:var(--okbg);border:1px solid #bbf7d0;color:var(--ok);
+         padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.55;margin-top:14px;}
+  .note{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.55;}
+  .hide{display:none;}
+  svg.plot{width:100%;height:220px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-top:16px;}
+  footer{font-size:11px;color:var(--muted);text-align:center;margin-top:26px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Metcal<a href="../">&larr; All tools</a></div>
+  <header>
+    <h1>Interpolation</h1>
+    <p>Linear interpolation between tabulated calibration points &mdash; the method the schedules
+       permit for intermediate values.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  onclick="tab('t1',this)">Two points</button>
+    <button class="tab" role="tab" aria-selected="false" onclick="tab('t2',this)">From a table</button>
+  </div>
+
+  <!-- ---------- two point ---------- -->
+  <div class="card" id="t1">
+    <h2>Between two known points</h2>
+    <div class="row" style="margin-bottom:12px;">
+      <div class="field"><label for="x1">x&#8321;</label><input type="number" step="any" id="x1" value="10" oninput="calc1()"></div>
+      <div class="field"><label for="y1">y&#8321;</label><input type="number" step="any" id="y1" value="0.12" oninput="calc1()"></div>
+      <div class="field"><label for="x2">x&#8322;</label><input type="number" step="any" id="x2" value="20" oninput="calc1()"></div>
+      <div class="field"><label for="y2">y&#8322;</label><input type="number" step="any" id="y2" value="0.20" oninput="calc1()"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="xq">Find y at x =</label><input type="number" step="any" id="xq" value="14" oninput="calc1('x')"></div>
+      <div class="field"><label for="yq">or find x at y =</label><input type="number" step="any" id="yq" placeholder="optional" oninput="calc1('y')"></div>
+    </div>
+    <div class="out" id="k1"></div>
+    <div class="work" id="w1"></div>
+    <div id="v1"></div>
+  </div>
+
+  <!-- ---------- table ---------- -->
+  <div class="card hide" id="t2">
+    <h2>From a tabulated set</h2>
+    <div class="row" style="margin-bottom:12px;">
+      <div class="field" style="min-width:280px;">
+        <label for="tbl">Points &mdash; one per line, &ldquo;x, y&rdquo;</label>
+        <textarea id="tbl" oninput="calc2()" spellcheck="false">0, 0
+25, 0.031
+50, 0.048
+75, 0.055
+100, 0.061</textarea>
+      </div>
+      <div class="field" style="max-width:230px;">
+        <label for="xq2">Find y at x =</label>
+        <input type="number" step="any" id="xq2" value="60" oninput="calc2()">
+        <div style="height:12px;"></div>
+        <label for="allowx">Outside the table</label>
+        <select id="allowx" onchange="calc2()">
+          <option value="0" selected>Refuse to extrapolate</option>
+          <option value="1">Extrapolate, clearly flagged</option>
+        </select>
+      </div>
+    </div>
+    <div class="out" id="k2"></div>
+    <div class="work" id="w2"></div>
+    <div id="v2"></div>
+    <svg class="plot" id="plot" viewBox="0 0 600 220" preserveAspectRatio="none"></svg>
+    <div class="tablewrap" style="margin-top:16px;">
+      <table><thead><tr><th>#</th><th>x</th><th>y</th></tr></thead><tbody id="tb"></tbody></table>
+    </div>
+    <p class="note">Accepts comma, tab, semicolon or space separators, so you can paste straight from a
+       certificate or spreadsheet. Points are sorted by x automatically.</p>
+  </div>
+
+  <footer>
+    Straight-line interpolation only. Both SAMM schedules permit an uncertainty interpolated from the
+    next higher and lower tabulated value &mdash; they do not permit extrapolation beyond the tabulated range.<br>
+    Metcal Technologies (M) Sdn. Bhd.
+  </footer>
+</div>
+
+<script>
+function num(id){const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;}
+function f(v,d){ if(v===null||v===undefined||!isFinite(v))return '—';
+  const a=Math.abs(v); if(a!==0&&(a<1e-6||a>=1e9))return v.toExponential(4);
+  let s=v.toFixed(d===undefined?6:d); if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,''); return s; }
+function kpi(k,v,s){return '<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';}
+function tab(id,btn){
+  ['t1','t2'].forEach(t=>document.getElementById(t).classList.toggle('hide',t!==id));
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b===btn?'true':'false'));
+}
+function lerp(x,x1,y1,x2,y2){ return y1+(x-x1)*(y2-y1)/(x2-x1); }
+
+/* ---------- two point ---------- */
+function calc1(src){
+  const x1=num('x1'),y1=num('y1'),x2=num('x2'),y2=num('y2');
+  const K=document.getElementById('k1'),W=document.getElementById('w1'),V=document.getElementById('v1');
+  if([x1,y1,x2,y2].some(v=>v===null)){K.innerHTML='';W.textContent='Enter both points.';V.innerHTML='';return;}
+  if(x1===x2){K.innerHTML='';W.textContent='';V.innerHTML='<div class="warnbox">x₁ and x₂ are the same, so the slope is undefined.</div>';return;}
+  const m=(y2-y1)/(x2-x1);
+  let html='', work='';
+  if(src==='y'){
+    const yq=num('yq');
+    if(yq!==null){
+      if(y1===y2){V.innerHTML='<div class="warnbox">y₁ and y₂ are the same, so x cannot be recovered from y.</div>';K.innerHTML='';W.textContent='';return;}
+      const xq=x1+(yq-y1)*(x2-x1)/(y2-y1);
+      document.getElementById('xq').value=f(xq,10);
+      html=kpi('x at y = '+f(yq,6),f(xq,6),'reverse interpolation');
+      work='x = x₁ + (y − y₁)(x₂ − x₁) / (y₂ − y₁)\n'
+          +'x = '+f(x1)+' + ('+f(yq)+' − '+f(y1)+')('+f(x2)+' − '+f(x1)+') / ('+f(y2)+' − '+f(y1)+')\n'
+          +'x = '+f(xq,10);
+      const lo=Math.min(y1,y2),hi=Math.max(y1,y2);
+      V.innerHTML=(yq<lo||yq>hi)?'<div class="warnbox"><strong>Outside the bracket.</strong> y = '+f(yq)+' is not between y₁ and y₂, so this is extrapolation, not interpolation.</div>':'';
+    }
+  } else {
+    const xq=num('xq');
+    if(xq!==null){
+      const yq=lerp(xq,x1,y1,x2,y2);
+      document.getElementById('yq').value=f(yq,10);
+      html=kpi('y at x = '+f(xq,6),f(yq,6),'slope '+f(m,8)+' per unit x');
+      work='y = y₁ + (x − x₁)(y₂ − y₁) / (x₂ − x₁)\n'
+          +'y = '+f(y1)+' + ('+f(xq)+' − '+f(x1)+')('+f(y2)+' − '+f(y1)+') / ('+f(x2)+' − '+f(x1)+')\n'
+          +'y = '+f(yq,10);
+      const lo=Math.min(x1,x2),hi=Math.max(x1,x2);
+      V.innerHTML=(xq<lo||xq>hi)?'<div class="warnbox"><strong>Outside the bracket.</strong> x = '+f(xq)+' is not between x₁ and x₂, so this is extrapolation, not interpolation. The schedules permit interpolation between tabulated points only.</div>':'';
+    }
+  }
+  K.innerHTML=html+kpi('Slope',f(m,8),'(y₂ − y₁) / (x₂ − x₁)');
+  W.textContent=work;
+}
+
+/* ---------- table ---------- */
+function parseTable(){
+  const raw=document.getElementById('tbl').value.split(/\r?\n/);
+  const pts=[];
+  raw.forEach(function(line){
+    const t=line.trim(); if(!t) return;
+    const p=t.split(/[,;\t ]+/).filter(Boolean).map(Number);
+    if(p.length>=2 && isFinite(p[0]) && isFinite(p[1])) pts.push({x:p[0],y:p[1]});
+  });
+  pts.sort(function(a,b){return a.x-b.x;});
+  return pts;
+}
+function calc2(){
+  const pts=parseTable(), xq=num('xq2'), allow=document.getElementById('allowx').value==='1';
+  const K=document.getElementById('k2'),W=document.getElementById('w2'),V=document.getElementById('v2');
+  const tb=document.getElementById('tb');
+  tb.innerHTML=pts.map(function(p,i){return '<tr id="r'+i+'"><td class="n">'+(i+1)+'</td><td class="n">'+f(p.x)+'</td><td class="n">'+f(p.y)+'</td></tr>';}).join('');
+  plot(pts,null);
+  if(pts.length<2){K.innerHTML='';W.textContent='Enter at least two points.';V.innerHTML='';return;}
+  if(xq===null){K.innerHTML='';W.textContent='Enter the x you want.';V.innerHTML='';return;}
+  const lo=pts[0], hi=pts[pts.length-1];
+
+  /* exact tabulated point */
+  const exact=pts.findIndex(function(p){return p.x===xq;});
+  if(exact>=0){
+    K.innerHTML=kpi('y at x = '+f(xq,6),f(pts[exact].y,6),'exact tabulated point');
+    W.textContent='x = '+f(xq)+' is tabulated directly. No interpolation applied.';
+    V.innerHTML='<div class="okbox"><strong>Tabulated value used directly.</strong> Row '+(exact+1)+' of the table.</div>';
+    const r=document.getElementById('r'+exact); if(r)r.className='hit';
+    plot(pts,{x:xq,y:pts[exact].y});
+    return;
+  }
+  /* outside */
+  if(xq<lo.x||xq>hi.x){
+    if(!allow){
+      K.innerHTML=''; W.textContent='';
+      V.innerHTML='<div class="warnbox"><strong>Outside the tabulated range.</strong> x = '+f(xq)
+        +' lies outside '+f(lo.x)+' to '+f(hi.x)+'. The schedules permit interpolation between the next higher and lower '
+        +'tabulated value, not extrapolation beyond the table. Switch the selector if you need an extrapolated figure anyway.</div>';
+      plot(pts,null); return;
+    }
+    const a=(xq<lo.x)?pts[0]:pts[pts.length-2], b=(xq<lo.x)?pts[1]:pts[pts.length-1];
+    const y=lerp(xq,a.x,a.y,b.x,b.y);
+    K.innerHTML=kpi('y at x = '+f(xq,6),f(y,6),'EXTRAPOLATED');
+    W.textContent='Using the '+(xq<lo.x?'first':'last')+' two points ('+f(a.x)+', '+f(a.y)+') and ('+f(b.x)+', '+f(b.y)+')\n'
+      +'y = '+f(a.y)+' + ('+f(xq)+' − '+f(a.x)+')('+f(b.y)+' − '+f(a.y)+') / ('+f(b.x)+' − '+f(a.x)+')\n'
+      +'y = '+f(y,10);
+    V.innerHTML='<div class="warnbox"><strong>Extrapolated, not interpolated.</strong> x = '+f(xq)+' is outside the tabulated range '
+      +f(lo.x)+' to '+f(hi.x)+'. This figure is not covered by the schedule and should not be quoted as accredited.</div>';
+    plot(pts,{x:xq,y:y}); return;
+  }
+  /* bracket */
+  let i=0; while(i<pts.length-2 && pts[i+1].x<xq) i++;
+  const a=pts[i], b=pts[i+1];
+  const y=lerp(xq,a.x,a.y,b.x,b.y);
+  const m=(b.y-a.y)/(b.x-a.x);
+  K.innerHTML=kpi('y at x = '+f(xq,6),f(y,6),'between rows '+(i+1)+' and '+(i+2))
+    +kpi('Bracket',f(a.x)+' – '+f(b.x),'y '+f(a.y)+' – '+f(b.y))
+    +kpi('Slope',f(m,8),'per unit x in this segment');
+  W.textContent='y = y₁ + (x − x₁)(y₂ − y₁) / (x₂ − x₁)\n'
+    +'y = '+f(a.y)+' + ('+f(xq)+' − '+f(a.x)+')('+f(b.y)+' − '+f(a.y)+') / ('+f(b.x)+' − '+f(a.x)+')\n'
+    +'y = '+f(y,10);
+  V.innerHTML='<div class="okbox"><strong>Interpolated between tabulated points.</strong> x = '+f(xq)
+    +' sits between '+f(a.x)+' and '+f(b.x)+', which is what the schedules permit.</div>';
+  const ra=document.getElementById('r'+i), rb=document.getElementById('r'+(i+1));
+  if(ra)ra.className='hit'; if(rb)rb.className='hit';
+  plot(pts,{x:xq,y:y});
+}
+function plot(pts,q){
+  const el=document.getElementById('plot');
+  if(pts.length<2){el.innerHTML='';return;}
+  const W=600,H=220,pad=26;
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  let x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  let y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+  if(q){x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y);}
+  if(x1===x0)x1=x0+1; if(y1===y0)y1=y0+1;
+  const sx=v=>pad+(v-x0)/(x1-x0)*(W-pad*2);
+  const sy=v=>H-pad-(v-y0)/(y1-y0)*(H-pad*2);
+  let d=pts.map(function(p,i){return (i?'L':'M')+sx(p.x).toFixed(1)+' '+sy(p.y).toFixed(1);}).join('');
+  let s='<line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#d9e2ec"/>'
+       +'<line x1="'+pad+'" y1="'+pad+'" x2="'+pad+'" y2="'+(H-pad)+'" stroke="#d9e2ec"/>'
+       +'<path d="'+d+'" fill="none" stroke="#1a5f9e" stroke-width="2"/>';
+  pts.forEach(function(p){ s+='<circle cx="'+sx(p.x).toFixed(1)+'" cy="'+sy(p.y).toFixed(1)+'" r="3.5" fill="#1a5f9e"/>'; });
+  if(q){
+    s+='<line x1="'+sx(q.x).toFixed(1)+'" y1="'+pad+'" x2="'+sx(q.x).toFixed(1)+'" y2="'+(H-pad)+'" stroke="#e8792a" stroke-dasharray="4 3"/>'
+      +'<circle cx="'+sx(q.x).toFixed(1)+'" cy="'+sy(q.y).toFixed(1)+'" r="5" fill="#e8792a"/>';
+  }
+  el.innerHTML=s;
+}
+calc1('x'); calc2();
+</script>
+</body>
+</html>
